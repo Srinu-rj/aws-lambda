@@ -3,7 +3,9 @@ on:
     push:
         branches:
             - master
-
+env:
+    JAVA_VERSION: 21 #${{ environment.JAVA_VERSION }}
+    MAVEN_VERSION: 3.9.9
 jobs:
   Building-and-Testing:
     runs-on: ubuntu-latest
