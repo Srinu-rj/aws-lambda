@@ -11,3 +11,29 @@ jobs:
     steps:
       - name: Run a script
         run: echo "This workflow runs at Everyone One Hour "
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Todo Disabling shallow clones is recommended for improving the relevancy of reporting
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}   # Todo Make It '21'
+          distribution: 'temurin' # 'adopt'
+          architecture: x64
+          cache: 'maven' # Strongly recommended for faster builds!
+          cache-dependency-path: 'pom.xml' # Or '**/pom.xml' for multi-module projects
+
+      - name: Maven Validate
+        run: mvn validate
+
+      - name: Maven Compile
+        run: mvn compile
+
+      - name: Maven Package
+        run: mvn package
+
+      - name: Maven clean install
+        run: mvn clean install
