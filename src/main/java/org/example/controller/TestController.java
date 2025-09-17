@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class TestController {
+
     @GetMapping("/test")
     public String test(){
         return "Hello All";
@@ -21,4 +22,10 @@ public class TestController {
     public String wellcome(){
         return "Wellcome to Aws Lambda Spring Boot Application";
     }
+
+    @GetMapping("/greet")
+    public String greet() {
+        return "Greetings from Spring Boot Application on AWS Lambda!";
+    }
+
 }

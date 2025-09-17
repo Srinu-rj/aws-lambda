@@ -6,6 +6,11 @@ on:
 env:
     JAVA_VERSION: 21 #${{ environment.JAVA_VERSION }}
     MAVEN_VERSION: 3.9.9
+    AWS_REGION: ap-south-1
+    LAMBDA_FUNCTION_NAME: MySimpleLambdaFunction
+    AWS_ROLE_TO_ASSUME: arn:aws:iam::127489365181:role/gitactions-lambda-role
+
+
 jobs:
   Building-and-Testing:
     runs-on: ubuntu-latest
@@ -39,3 +44,67 @@ jobs:
 
       - name: Maven clean install
         run: mvn clean install
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        with:
+          mask-password: 'true'
+
+      - name: Build, tag, and push docker image to Amazon ECR
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: spring-application
+          IMAGE_TAG: v1.02
+        run: |
+          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG    
+
+
+#      # Todo Step 3: Deploy the Lambda function
+#      - name: Deploy Lambda
+#        uses: appleboy/lambda-action@v1.2.0
+#        with:
+#          function_name: spring-lambda  #Todo  Replace with your Lambda function name
+#          zip_file: ./aws-lambda-1.0-SNAPSHOT-lambda-package.zip  # Todo Path to your zipped Lambda code
+#          handler_name: org.example.StreamLambdaHandler::handleRequest  # Todo Replace with your handler
+#          runtime: Java 17  #Todo  Replace with your runtime
+#
+#
+#
+#      - name: Zip the Lambda function
+#        run: zip function.zip lambda_function.py
+#
+#      - name: Check if Lambda function exists
+#        id: check_lambda
+#        run: |
+#          if aws lambda get-function --function-name ${{ env.LAMBDA_FUNCTION_NAME }}; then
+#            echo "::set-output name=lambda_exists::true"
+#          else
+#            echo "::set-output name=lambda_exists::false"
+#          fi
+#
+#       #Todo ->https://medium.com/codex/deploy-aws-lambda-using-github-actions-from-scratch-in-10-steps-c3d8e148a264
+#      - name: Create or Update Lambda function
+#        run: |
+#          if [ "${{ steps.check_lambda.outputs.lambda_exists }}" == "false" ]; then
+#            echo "Creating Lambda function..."
+#            aws lambda create-function --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+#              --runtime python3.8 --role ${{ env.AWS_ROLE_TO_ASSUME }} \
+#              --handler lambda_function.lambda_handler --zip-file fileb://function.zip
+#          else
+#            echo "Updating Lambda function..."
+#            aws lambda update-function-code \
+#              --function-name ${{ env.LAMBDA_FUNCTION_NAME }} \
+#              --zip-file fileb://function.zip --publish
+#          fi
+#
+#      - name: Clean up
+#        run: rm function.zip
